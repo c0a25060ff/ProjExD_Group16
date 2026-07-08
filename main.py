@@ -381,18 +381,19 @@ while running:
 
                             locked_enemy["zombie"] = True
                             locked_enemy["zombie_start"] = pygame.time.get_ticks()
+                            locked_enemy["index"] = 0
 
                             zombie_message = True
                             zombie_message_start = pygame.time.get_ticks()
             
             if locked_enemy and locked_enemy["index"] >= len(locked_enemy["word_en"]):
-                if enemy["zombie"]:
+                if locked_enemy["zombie"]:
 
-                    enemy["x"] = enemy["spawn_x"]
-                    enemy["y"] = enemy["spawn_y"]
+                    locked_enemy["x"] = locked_enemy["spawn_x"]
+                    locked_enemy["y"] = locked_enemy["spawn_y"]
 
-                    enemy["index"] = 0
-                    enemy["miss"] = 0
+                    locked_enemy["index"] = 0
+                    locked_enemy["miss"] = 0
 
                     locked_enemy = None
 
@@ -452,15 +453,14 @@ while running:
                     
         now = pygame.time.get_ticks()
 
-        for enemy in enemies:
+        for e in enemies:
 
-            if enemy["zombie"]:
+            if e["zombie"]:
 
-                if now - enemy["zombie_start"] >= 10000:
+                if now - e["zombie_start"] >= 10000:
 
-                    enemy["zombie"] = False
-                    enemy["miss"] = 0
-                    enemy["index"] = 0
+                    e["zombie"] = False
+                    e["miss"] = 0
 
     offset_x, offset_y = 0, 0
     if shake_frames > 0:
@@ -479,11 +479,12 @@ while running:
     for e in enemies:
         rotated_enemy_img = pygame.transform.rotate(e["image"], e["rot_angle"])
         # ゾンビ中は敵を緑色にする
-    if enemy["zombie"]:
-        rotated_enemy_img = rotated_enemy_img.copy()
-        green = pygame.Surface(rotated_enemy_img.get_size(), pygame.SRCALPHA)
-        green.fill((0, 180, 0, 100))   # 緑色
-        rotated_enemy_img.blit(green, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+        if e["zombie"]:
+            rotated_enemy_img = rotated_enemy_img.copy()
+            green = pygame.Surface(rotated_enemy_img.get_size(), pygame.SRCALPHA)
+            green.fill((0, 255, 0, 160))   # 緑色
+            rotated_enemy_img.blit(green, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+            
         new_rect = rotated_enemy_img.get_rect(center=(int(e["x"]), int(e["y"])))
         screen.blit(rotated_enemy_img, (new_rect.x + offset_x, new_rect.y + offset_y))
 
@@ -503,12 +504,18 @@ while running:
         screen.blit(font_ui.render(f"LIFE: {hp} / 5", True, UI_COLOR), (20, 60))
         
         # ゾンビタイマー表示
+        zombie_enemy = None
+        
         for enemy in enemies:
             if enemy["zombie"]:
+                zombie_enemy = enemy
+                break
+            
+        if zombie_enemy:    
 
                 remain = max(
                     0,
-                    10 - (pygame.time.get_ticks() - enemy["zombie_start"]) / 1000
+                    10 - (pygame.time.get_ticks() - zombie_enemy["zombie_start"]) / 1000
                 )
 
                 txt = font_ui.render(
@@ -518,7 +525,7 @@ while running:
                 )
 
                 screen.blit(txt, (20, 100))
-                break
+                
             
     elif game_state == "GAMEOVER":
         mask = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT)).convert_alpha()
@@ -534,7 +541,7 @@ while running:
             text = font_title.render(
                 "☠ ZOMBIE TIME!!",
                 True,
-                (0, 255, 0)
+                (50, 255, 50)
             )
 
             rect = text.get_rect(center=(CENTER_X, CENTER_Y))
