@@ -3,7 +3,10 @@ import random
 import sys
 import math
 import os
+
+# カレントディレクトリを実行ファイルの場所に合わせる
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 # ==========================================
 # 1. 初期設定 & オーディオ初期化
 # ==========================================
@@ -69,7 +72,6 @@ def load_img(filename, w, h, fallback_color_idx):
 # 🎵 サウンドファイルの読み込み & 音量調整
 # ==========================================
 def load_sound(filename):
-    # ex5フォルダから見た「ゲーム」フォルダ内のパスに修正
     actual_path = os.path.join("ゲーム", filename)
     if os.path.exists(actual_path):
         try:
@@ -79,7 +81,6 @@ def load_sound(filename):
     return None
 
 def play_bgm(filename):
-    # ex5フォルダから見た「ゲーム」フォルダ内のパスに修正
     actual_path = os.path.join("ゲーム", filename)
     if os.path.exists(actual_path):
         try:
@@ -89,13 +90,11 @@ def play_bgm(filename):
         except Exception as e:
             print(f"BGM再生エラー: {e}")
 
-# 全て「ゲーム」フォルダ内から読み込むように内部で自動補正されます
 snd_type = load_sound("type.wav")       
 snd_kill = load_sound("kill.wav")       
 snd_damage = load_sound("damage.wav")   
 snd_gameover = load_sound("gameover.wav")
 
-# ★効果音の個別の音量を設定（0.0 が無音、1.0 が最大）
 if snd_kill: snd_kill.set_volume(0.15)        # ★敵が倒れる音をさらに小さく調整
 if snd_gameover: snd_gameover.set_volume(0.3) # ゲームオーバー音を小さく調整
 if snd_type: snd_type.set_volume(1.0)         # キー入力音
@@ -104,7 +103,7 @@ if snd_damage: snd_damage.set_volume(1.0)     # ダメージ音
 play_bgm("bgm.mp3")
 
 # ==========================================
-# 2. 画像と敵のデータ定義（ポップカルチャー・完全一致版）
+# 2. 画像と敵のデータ定義
 # ==========================================
 bg_images = [
     load_img("bg1.png", SCREEN_WIDTH, SCREEN_HEIGHT, 0),
@@ -148,7 +147,6 @@ ENEMY_TYPES = [
         {"ja": "すたーぷらちな", "en": "SUTAAPURATINA"},{"ja": "ざわーるど", "en": "ZAWAARUDO"},
         {"ja": "だーすべいだー", "en": "DAASUBEIDAA"},{"ja": "とるーぱー", "en": "TORUUPAA"},
         {"ja": "たつまき", "en": "TATUMAKI"}, {"ja": "きんぐえんじん", "en": "KINGUENZIN"},{"ja": "もうちがう", "en": "MOUTIGAU"}
-        
     ],
     # 種類 2: 【中目】6〜10文字
     [
@@ -186,10 +184,9 @@ ENEMY_TYPES = [
         {"ja": "ぎんがけい", "en": "GINGAKEI"},{"ja": "おわっちまった", "en": "OWATTIMATTA"},
         {"ja": "つよくなりすぎてしまった", "en": "TUYOKUNARISUGITESIMATTA"},{"ja": "きょうかい", "en": "KYOUKAI"},
         {"ja": "かいじんきょうかい", "en": "KAIZINKYOUKAI"},{"ja": "しゅじんこう", "en": "SYUZINKOU"},
-        {"ja": "げーむをさせてくれ", "en": "GEEMUWOSASETEKURE"},{"ja": "おまえはただのうまだ", "en": "OMAEHATADANOUMADA"},
+        {"ja": "げーむをさせてくれ", "en": "GEEMUWOSASETEKURE"},{"ja": "おまえはただのううまだ", "en": "OMAEHATADANOUMADA"},
         {"ja": "スイパラいこ", "en": "SUIPARAIKO"}, {"ja": "けもの", "en": "KEMONO"},{"ja": "はやしれいな", "en": "HAYASIREINA"},
-        {"ja": "けもの", "en": "KEMONO"},{"ja": "はやしれいな", "en": "HAYASIREINA"},
-        {"ja": "ささもとあきら", "en": "SASAMOTOAKIRA"},{"ja": "あまりろり", "en": "AMARIRORI"},
+        {"ja": "ささもとあきら", "en": "SASAMOTOAKIRA"},{"ja": "あまりろり", "en": "AMARIRORI"}
     ]
 ]
 
@@ -323,14 +320,15 @@ def create_enemy():
     offset_ja = -65 if enemy_type_idx == 0 else -85
     offset_en = -40 if enemy_type_idx == 0 else -60
     
-    # ★変更箇所：最長の敵（enemy_type_idx が 4）ならベースポイントを200、それ以外は100にする
+    # 最長の敵（enemy_type_idx が 4）ならベースポイントを200、それ以外は100にする
     if enemy_type_idx == 4:
         base_score = 200
     else:
         base_score = 100
     
-    # 20%の確率でスコアが2倍になるフラグを設定
+    # ★ 20%の確率で「敵自身のベースポイント」を直接2倍にする
     if random.random() < 0.20:
+        base_score *= 2  # 敵のポイントを直接2倍に変更！
         score_multiplier = 2
     else:
         score_multiplier = 1
@@ -340,8 +338,8 @@ def create_enemy():
         "word_ja": word_data["ja"], "word_en": word_data["en"], "index": 0,
         "speed": random.uniform(0.5, 1.0) + (score // 1000) * 0.1,
         "image": chosen_image, "rot_angle": rot_angle, "offset_ja": offset_ja, "offset_en": offset_en,
-        "base_score": base_score,          # ベーススコアを保持
-        "score_multiplier": score_multiplier  # 倍率データを保持
+        "base_score": base_score,          # ベーススコア（すでに2倍になっている場合あり）
+        "score_multiplier": score_multiplier  # 見た目の★判定用の倍率フラグ
     }
 
 enemies.append(create_enemy())
@@ -388,8 +386,8 @@ while running:
                 shake_frames = 15 
                 combo_count += 1
                 
-                # ★変更箇所：敵のベースポイント（100 or 200）にコンボ数と倍率を掛け合わせる
-                score += (locked_enemy["base_score"] * combo_count) * locked_enemy["score_multiplier"]
+                # ★ 敵のポイント（すでに2倍になっている場合あり）にコンボ数を掛け合わせる
+                score += locked_enemy["base_score"] * combo_count
                     
                 enemies.remove(locked_enemy)
                 locked_enemy = None
@@ -453,9 +451,15 @@ while running:
         new_rect = rotated_enemy_img.get_rect(center=(int(e["x"]), int(e["y"])))
         screen.blit(rotated_enemy_img, (new_rect.x + offset_x, new_rect.y + offset_y))
 
-        # ポイント2倍の敵の日本語を黄色（LOCKED_COLOR）にして見分けやすくする
-        ja_color = LOCKED_COLOR if e["score_multiplier"] == 2 else TEXT_JA_COLOR
-        surf_ja = font_ja.render(e["word_ja"], True, ja_color)
+        # ★ ポイント2倍の敵の日本語を黄色（LOCKED_COLOR）にし、さらに「★」を付けて見分けやすくする
+        if e["score_multiplier"] == 2:
+            display_ja = f"★ {e['word_ja']}"
+            ja_color = LOCKED_COLOR
+        else:
+            display_ja = e["word_ja"]
+            ja_color = TEXT_JA_COLOR
+            
+        surf_ja = font_ja.render(display_ja, True, ja_color)
         
         color_en = LOCKED_COLOR if e == locked_enemy else ENEMY_COLOR
         typed_part, untyped_part = e["word_en"][:e["index"]], e["word_en"][e["index"]:]
